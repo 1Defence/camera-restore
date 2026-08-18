@@ -4,6 +4,7 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ClientShutdown;
@@ -30,6 +31,9 @@ public class CameraRestorePlugin extends Plugin
 	//this is intentionally not changed on startup/shutdown, it will only change once per client launch.
 	private boolean restoredCam = false;
 
+	//only save if a login has occurred during clients lifecycle, otherwise will overwrite to default unset values
+	private boolean hasLoggedIn = false;
+
 	@Override
 	protected void startUp() throws Exception
 	{
@@ -40,8 +44,19 @@ public class CameraRestorePlugin extends Plugin
 	@Subscribe
 	private void onClientShutdown(ClientShutdown e)
 	{
+		if(!hasLoggedIn)
+			return;
 		configManager.setConfiguration(CONFIG_GROUP, CONFIG_SHUTDOWN_YAW, client.getCameraYaw());
 		configManager.setConfiguration(CONFIG_GROUP, CONFIG_SHUTDOWN_PITCH, client.getCameraPitch());
+	}
+
+	@Subscribe
+	private void onGameStateChanged(GameStateChanged state){
+		if(hasLoggedIn)
+			return;
+		if(state.getGameState() == GameState.LOGGED_IN){
+			hasLoggedIn = true;
+		}
 	}
 
 	//This will only ever run once per client load.
