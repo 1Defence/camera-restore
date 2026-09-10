@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ClientShutdown;
@@ -23,6 +24,9 @@ public class CameraRestorePlugin extends Plugin
 	@Inject
 	private ConfigManager configManager;
 
+	@Inject
+	private ClientThread clientThread;
+
 	private final String CONFIG_GROUP = "camerarestore";
 	private final String CONFIG_SHUTDOWN_YAW = "shutdownYaw";
 	private final String CONFIG_SHUTDOWN_PITCH = "shutdownPitch";
@@ -37,7 +41,9 @@ public class CameraRestorePlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		RestoreShutdownCamera();
+		clientThread.invokeLater(() -> {
+			RestoreShutdownCamera();
+		});
 	}
 
 	//Not to be confused with plugin shutdown, this occurs on client close once.
